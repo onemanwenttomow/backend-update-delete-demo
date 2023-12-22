@@ -1,4 +1,4 @@
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import JokeForm from "../JokeForm";
@@ -9,13 +9,43 @@ export default function Joke() {
   const router = useRouter();
   const { id } = router.query;
 
-  const { data, isLoading } = useSWR(`/api/jokes/${id}`);
+  const { data, isLoading, mutate } = useSWR(id ? `/api/jokes/${id}` : null);
 
-  function handleEdit(event) {
+  async function handleEdit(event) {
     event.preventDefault();
+
+    // we need to figure out what is in the form
+    const formData = new FormData(event.target);
+    const jokeData = Object.fromEntries(formData);
+
+    // console.log("jokeData: ", jokeData);
+    // we need to make a PUT request to our API route
+
+    const response = await fetch(`/api/jokes/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(jokeData),
+    });
+
+    if (response.ok) {
+      mutate();
+    }
   }
 
-  async function handleDelete() {}
+  async function handleDelete() {
+    console.log("delete please");
+    // we should make a DELETE request to our
+    // API route
+
+    await fetch(`/api/jokes/${id}`, {
+      method: "DELETE",
+    });
+
+    // then we should redirect to the homepage
+    router.push("/");
+  }
 
   if (isLoading) {
     return <h1>Loading...</h1>;
